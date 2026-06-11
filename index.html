@@ -1,0 +1,2213 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>项目页 Codex 风格改版</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --nav: #e8f0ff;
+      --nav-selected: #ffffff;
+      --canvas: #f7f7f5;
+      --surface: #ffffff;
+      --surface-soft: #f2f2f0;
+      --surface-hover: #ececea;
+      --line: #e5e5e2;
+      --line-strong: #d6d6d1;
+      --ink: #20201e;
+      --body: #555550;
+      --muted: #8a8a83;
+      --blue: #3267e8;
+      --blue-soft: #e9efff;
+      --green: #20855b;
+      --green-soft: #e6f5ed;
+      --purple-soft: #eeeafd;
+      --peach-soft: #f9eee7;
+      --shadow: 0 1px 2px rgba(28, 28, 26, .04), 0 10px 28px rgba(28, 28, 26, .06);
+    }
+
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    body {
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+      background: #dce7fa;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, textarea { font: inherit; }
+    button { color: inherit; }
+    svg { display: block; }
+
+    .app {
+      width: 100vw;
+      height: 100vh;
+      min-width: 1360px;
+      display: grid;
+      grid-template-columns: 92px 350px minmax(610px, 1fr) 452px;
+      grid-template-rows: 1fr;
+      border: 1px solid #c9d6eb;
+      background: var(--canvas);
+      transition: grid-template-columns 180ms ease;
+    }
+    .app.project-sidebar-collapsed {
+      grid-template-columns: 92px 0 minmax(610px, 1fr) 452px;
+    }
+    .app.detail-panel-collapsed {
+      grid-template-columns: 92px 350px minmax(610px, 1fr) 0;
+    }
+    .app.project-sidebar-collapsed.detail-panel-collapsed {
+      grid-template-columns: 92px 0 minmax(610px, 1fr) 0;
+    }
+
+    .icon {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Preserved left navigation */
+    .global-nav {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #f2f2f0;
+      border-right: 1px solid var(--line);
+      padding: 14px 8px 12px;
+    }
+    .traffic-lights {
+      width: 100%;
+      display: flex;
+      gap: 10px;
+      padding: 0 2px 15px;
+    }
+    .traffic-lights span {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+    }
+    .traffic-lights span:nth-child(1) { background: #ff6058; }
+    .traffic-lights span:nth-child(2) { background: #ffbd2e; }
+    .traffic-lights span:nth-child(3) { background: #28c941; }
+    .profile {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 16px;
+      border-radius: 10px;
+      background: #e3e3df;
+      border: 1px solid var(--line-strong);
+      font-size: 27px;
+    }
+    .global-nav-list {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .global-nav-item {
+      width: 100%;
+      height: 62px;
+      border: 0;
+      border-radius: 7px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      background: transparent;
+      color: #666660;
+      font-size: 13px;
+      cursor: default;
+    }
+    .global-nav-item .icon { width: 23px; height: 23px; }
+    .global-nav-item:hover {
+      background: #e9e9e6;
+      color: var(--ink);
+    }
+    .global-nav-item.selected {
+      background: var(--surface);
+      color: var(--ink);
+      box-shadow: 0 1px 2px rgba(31, 31, 28, .06);
+    }
+    .global-nav-bottom {
+      width: 100%;
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+      color: #666660;
+    }
+    .global-nav-bottom button {
+      width: 48px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      background: transparent;
+      border: 0;
+      border-radius: 8px;
+    }
+    .global-nav-bottom button:hover {
+      background: #e9e9e6;
+      color: var(--ink);
+    }
+
+    /* Project sidebar */
+    .project-sidebar {
+      min-height: 0;
+      height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--line);
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: opacity 140ms ease, visibility 140ms ease;
+    }
+    .app.project-sidebar-collapsed .project-sidebar {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .sidebar-top {
+      flex: none;
+      padding: 14px 16px 10px;
+      border-bottom: 0;
+    }
+    .project-search {
+      height: 36px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface-soft);
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .project-search:focus-within {
+      background: #fff;
+      border-color: #cfcfca;
+      box-shadow: 0 0 0 3px rgba(20, 20, 18, .04);
+      color: var(--ink);
+    }
+    .project-search .icon { width: 15px; height: 15px; }
+    .project-search input {
+      min-width: 0;
+      flex: 1;
+      border: 0;
+      outline: none;
+      background: transparent;
+      color: var(--ink);
+      font: inherit;
+    }
+    .project-search input::placeholder { color: var(--muted); }
+    .project-sidebar-actions {
+      margin-top: 9px;
+      display: flex;
+      gap: 7px;
+    }
+    .new-project {
+      min-width: 0;
+      flex: 1;
+      height: 36px;
+      border: 1px solid #272725;
+      background: #272725;
+      color: #fff;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 520;
+    }
+    .new-project .icon { width: 17px; height: 17px; }
+    .collapse-sidebar {
+      position: relative;
+      flex: none;
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--body);
+    }
+    .collapse-sidebar:hover {
+      background: var(--surface-soft);
+      color: var(--ink);
+    }
+    .collapse-sidebar::after,
+    .show-project-sidebar::after,
+    .detail-toggle::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      z-index: 20;
+      top: calc(100% + 7px);
+      left: 50%;
+      transform: translateX(-50%) translateY(-2px);
+      width: max-content;
+      padding: 5px 7px;
+      border-radius: 5px;
+      background: #2d2d2a;
+      color: #fff;
+      font-size: 10px;
+      line-height: 1;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 100ms ease, transform 100ms ease;
+    }
+    .collapse-sidebar:hover::after,
+    .collapse-sidebar:focus-visible::after,
+    .show-project-sidebar:hover::after,
+    .show-project-sidebar:focus-visible::after,
+    .detail-toggle:hover::after,
+    .detail-toggle:focus-visible::after {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .sidebar-label {
+      padding: 20px 20px 8px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 650;
+      letter-spacing: .7px;
+      text-transform: uppercase;
+    }
+    .project-list {
+      padding: 0 10px 18px;
+      overflow: auto;
+    }
+    .project-empty-state {
+      margin: 28px 10px 0;
+      padding: 18px 12px;
+      border: 1px dashed var(--line);
+      border-radius: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+      background: var(--surface-soft);
+    }
+    .project-unit { margin-bottom: 2px; }
+    .project-row {
+      min-height: 46px;
+      padding: 7px 9px;
+      border-radius: 8px;
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px;
+      color: var(--body);
+      font-size: 14px;
+    }
+    .project-row.pinned .project-name { font-weight: 560; color: var(--ink); }
+    .project-row:hover { background: var(--surface-soft); }
+    .project-row.active-parent { color: var(--ink); font-weight: 560; }
+    .project-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      background: var(--surface-soft);
+      color: #65655f;
+      font-size: 14px;
+      font-weight: 650;
+    }
+    .project-icon.orange { background: #fff1dd; color: #cc7300; }
+    .project-icon.purple { background: #eee9ff; color: #7355d9; }
+    .project-icon.mint { background: #e4f5ef; color: #25815f; }
+    .project-icon.blue { background: #e6edff; color: #3267e8; }
+    .project-icon.lilac { background: #f0e9ff; color: #835ddf; }
+    .project-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .row-action {
+      position: relative;
+      width: 24px;
+      height: 24px;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      display: grid;
+      place-items: center;
+      border-radius: 5px;
+      transition: opacity 120ms ease, background-color 120ms ease, color 120ms ease;
+    }
+    .row-action .icon { width: 15px; height: 15px; }
+    .project-actions {
+      display: flex;
+      align-items: center;
+      gap: 1px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 120ms ease;
+    }
+    .project-row:hover .project-actions,
+    .project-row:focus-within .project-actions {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .pin-project.active { color: #9a6c25; }
+    .row-action:hover {
+      background: var(--surface-hover);
+      color: var(--ink);
+    }
+    .row-action::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      z-index: 10;
+      top: 50%;
+      right: calc(100% + 7px);
+      transform: translateY(-50%) translateX(2px);
+      width: max-content;
+      padding: 5px 7px;
+      border: 1px solid #333330;
+      border-radius: 5px;
+      background: #2d2d2a;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 520;
+      line-height: 1;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 100ms ease, transform 100ms ease;
+    }
+    .row-action:hover::after,
+    .row-action:focus-visible::after {
+      opacity: 1;
+      transform: translateY(-50%) translateX(0);
+    }
+    .thread-tree {
+      position: relative;
+      margin: 0 0 8px 35px;
+      border-left: 1px solid var(--line-strong);
+      padding-left: 8px;
+    }
+    .thread-row {
+      position: relative;
+      height: 38px;
+      padding: 0 10px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--body);
+      font-size: 13.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .task-state {
+      flex: none;
+      width: 15px;
+      height: 15px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line-strong);
+      border-radius: 4px;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 700;
+    }
+    .thread-row::before {
+      content: "";
+      position: absolute;
+      left: -9px;
+      top: 19px;
+      width: 8px;
+      height: 1px;
+      background: var(--line-strong);
+    }
+    .thread-row.active {
+      background: var(--surface-soft);
+      color: var(--ink);
+      font-weight: 560;
+    }
+    .thread-row.active .task-state {
+      border-color: #b7c9bf;
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    /* Main workspace */
+    .workspace {
+      min-height: 0;
+      height: 100vh;
+      min-width: 0;
+      background: var(--canvas);
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--line);
+    }
+    .workspace-header {
+      position: relative;
+      flex: none;
+      height: 70px;
+      background: rgba(247, 247, 245, .96);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 22px;
+    }
+    .show-project-sidebar {
+      position: absolute;
+      z-index: 5;
+      left: 12px;
+      top: 18px;
+      width: 34px;
+      height: 34px;
+      display: none;
+      place-items: center;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--body);
+    }
+    .show-project-sidebar:hover {
+      background: var(--surface-soft);
+      color: var(--ink);
+    }
+    .app.project-sidebar-collapsed .show-project-sidebar {
+      display: grid;
+    }
+    .app.project-sidebar-collapsed .workspace-header {
+      padding-left: 58px;
+    }
+    .thread-heading {
+      min-width: 0;
+      width: 260px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .thread-title {
+      font-size: 15px;
+      font-weight: 620;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .thread-context {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 11.5px;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .context-participants {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .context-participants .icon {
+      width: 13px;
+      height: 13px;
+      color: #74746e;
+    }
+    .context-participants.agent .icon {
+      color: #506b9e;
+    }
+    .segmented {
+      height: 44px;
+      padding: 3px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: var(--surface-soft);
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .segmented button {
+      position: relative;
+      height: 36px;
+      min-width: 60px;
+      padding: 3px 13px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 540;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .segmented button.active {
+      background: var(--surface);
+      color: var(--ink);
+      box-shadow: 0 1px 2px rgba(31, 31, 28, .08);
+    }
+    .tab-label {
+      color: inherit;
+      font-size: 12.5px;
+      font-weight: 620;
+      line-height: 1.1;
+    }
+    .tab-hint {
+      position: absolute;
+      z-index: 20;
+      top: calc(100% + 7px);
+      left: 50%;
+      transform: translateX(-50%) translateY(-2px);
+      width: max-content;
+      padding: 5px 7px;
+      border-radius: 5px;
+      background: #2d2d2a;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 500;
+      line-height: 1;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 100ms ease, transform 100ms ease;
+    }
+    .segmented button:hover .tab-hint,
+    .segmented button:focus-visible .tab-hint {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .icon-btn {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--body);
+    }
+    .icon-btn:hover { background: var(--surface-soft); border-color: var(--line); }
+    .icon-btn .icon { width: 17px; height: 17px; }
+    .detail-toggle {
+      position: relative;
+      border-color: transparent;
+      background: transparent;
+    }
+    .detail-toggle:hover { border-color: transparent; }
+    .detail-toggle .detail-toggle-expand { display: none; }
+    .app.detail-panel-collapsed .detail-toggle .detail-toggle-collapse { display: none; }
+    .app.detail-panel-collapsed .detail-toggle .detail-toggle-expand { display: block; }
+
+    .conversation {
+      min-height: 0;
+      flex: 1;
+      overflow: auto;
+      padding: 30px 0 20px;
+      scroll-behavior: smooth;
+    }
+    .conversation-inner {
+      width: min(790px, calc(100% - 64px));
+      margin: 0 auto;
+    }
+    .date-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 2px 0 26px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .date-divider::before, .date-divider::after {
+      content: "";
+      height: 1px;
+      background: var(--line);
+      flex: 1;
+    }
+    .assistant-turn {
+      display: grid;
+      grid-template-columns: 30px minmax(0, 1fr);
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+    .agent-avatar {
+      width: 30px;
+      height: 30px;
+      border: 1px solid var(--line-strong);
+      border-radius: 9px;
+      overflow: hidden;
+    }
+    .agent-avatar svg { width: 100%; height: 100%; }
+    .turn-content { min-width: 0; padding-top: 2px; }
+    .turn-meta {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 11.5px;
+    }
+    .turn-name { color: var(--body); font-weight: 560; }
+    .assistant-text {
+      color: #373733;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    .assistant-text p { margin: 0 0 9px; }
+    .assistant-text p:last-child { margin-bottom: 0; }
+    .reasoning {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 9px;
+    }
+    .reasoning .pulse {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #c3a16e;
+    }
+
+    .user-turn {
+      width: min(500px, 75%);
+      margin: 0 0 24px auto;
+    }
+    .user-meta {
+      display: flex;
+      justify-content: flex-end;
+      gap: 7px;
+      margin: 0 4px 6px;
+      color: var(--muted);
+      font-size: 11.5px;
+    }
+    .user-message {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface);
+      padding: 12px 14px;
+      font-size: 14px;
+      line-height: 1.55;
+      box-shadow: 0 1px 2px rgba(31, 31, 28, .03);
+    }
+    .mention {
+      color: var(--blue);
+      font-weight: 560;
+    }
+    .member-chip {
+      width: max-content;
+      margin-top: 9px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 8px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--surface-soft);
+      color: var(--body);
+      font-size: 11.5px;
+    }
+
+    .artifact-card {
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface);
+      overflow: hidden;
+    }
+    .artifact-head {
+      min-height: 45px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .artifact-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: grid;
+      place-items: center;
+      background: #edf3fb;
+      color: #41668f;
+    }
+    .artifact-icon .md-file-icon { width: 21px; height: 21px; }
+    .artifact-title {
+      min-width: 0;
+      flex: 1;
+      font-size: 12.5px;
+      font-weight: 600;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .artifact-badge {
+      padding: 3px 6px;
+      border-radius: 5px;
+      color: var(--muted);
+      background: var(--surface-soft);
+      font-size: 10px;
+      font-weight: 620;
+    }
+    .artifact-body {
+      padding: 12px;
+      color: var(--body);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+    .artifact-actions {
+      margin-top: 10px;
+      display: flex;
+      gap: 7px;
+    }
+    .small-button {
+      height: 28px;
+      padding: 0 9px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--body);
+      font-size: 11px;
+      font-weight: 560;
+    }
+    .small-button.primary {
+      border-color: #2e2e2b;
+      background: #2e2e2b;
+      color: #fff;
+    }
+
+    .composer-wrap {
+      flex: none;
+      padding: 0 24px 22px;
+      background: linear-gradient(180deg, rgba(247,247,245,0), var(--canvas) 18%);
+    }
+    .composer {
+      width: min(820px, 100%);
+      height: 130px;
+      margin: 0 auto;
+      border: 1px solid var(--line-strong);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .composer textarea {
+      min-height: 74px;
+      flex: 1;
+      resize: none;
+      padding: 16px 18px 8px;
+      border: 0;
+      outline: none;
+      color: var(--ink);
+      background: transparent;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .composer textarea::placeholder { color: #aaa9a2; }
+    .composer-toolbar {
+      min-height: 48px;
+      padding: 6px 8px 8px 10px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .composer-tool {
+      height: 31px;
+      min-width: 31px;
+      padding: 0 8px;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--body);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 11.5px;
+    }
+    .composer-tool:hover { background: var(--surface-soft); }
+    .composer-tool .icon { width: 16px; height: 16px; }
+    .composer-spacer { flex: 1; }
+    .mode-chip {
+      height: 30px;
+      padding: 0 9px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      border-radius: 7px;
+      color: var(--body);
+      font-size: 11.5px;
+    }
+    .send-button {
+      width: 34px;
+      height: 34px;
+      border: 0;
+      border-radius: 9px;
+      background: #2d2d2a;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      margin-left: 5px;
+    }
+    .send-button .icon { width: 16px; height: 16px; }
+
+    /* Right process panel */
+    .detail-panel {
+      min-height: 0;
+      height: 100vh;
+      min-width: 0;
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: opacity 140ms ease, visibility 140ms ease;
+    }
+    .app.detail-panel-collapsed .detail-panel {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .detail-tabs {
+      flex: none;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    .detail-tab {
+      position: relative;
+      height: 100%;
+      padding: 0 14px;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 540;
+    }
+    .detail-tab.active { color: var(--ink); }
+    .detail-tab.active::after {
+      content: "";
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: -1px;
+      height: 2px;
+      background: #292927;
+      border-radius: 2px 2px 0 0;
+    }
+    .detail-toolbar {
+      flex: none;
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .agent-progress-switcher {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      min-width: 0;
+      overflow: visible;
+      padding: 2px 3px;
+    }
+    .agent-progress-option {
+      position: relative;
+      flex: none;
+      width: 38px;
+      height: 40px;
+      margin-left: -5px;
+      padding: 0;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      background: transparent;
+      display: grid;
+      place-items: center;
+      color: var(--body);
+      transition: transform 120ms ease, background-color 120ms ease, border-color 120ms ease;
+    }
+    .agent-progress-option:first-child { margin-left: 0; }
+    .agent-progress-option:hover {
+      z-index: 4;
+      background: var(--surface-soft);
+      transform: translateY(-2px);
+    }
+    .agent-progress-option.selected {
+      z-index: 3;
+      border-color: #9eb0d3;
+      background: #eef3fb;
+    }
+    .agent-progress-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .agent-progress-avatar svg { width: 100%; height: 100%; }
+    .agent-progress-dot {
+      position: absolute;
+      right: 3px;
+      bottom: 3px;
+      width: 9px;
+      height: 9px;
+      border: 2px solid var(--surface);
+      border-radius: 50%;
+      background: var(--green);
+    }
+    .agent-progress-dot.running { background: #c89952; }
+    .agent-progress-dot.waiting { background: #a9a9a3; }
+    .agent-progress-option::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      z-index: 20;
+      top: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%) translateY(-2px);
+      width: max-content;
+      max-width: 180px;
+      padding: 5px 7px;
+      border-radius: 5px;
+      background: #2d2d2a;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 500;
+      line-height: 1.2;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 100ms ease, transform 100ms ease;
+    }
+    .agent-progress-option:hover::after,
+    .agent-progress-option:focus-visible::after {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .status-pill {
+      height: 26px;
+      padding: 0 8px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--green-soft);
+      color: var(--green);
+      font-size: 10.5px;
+      font-weight: 620;
+    }
+    .status-pill::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .process-list {
+      min-height: 0;
+      overflow: auto;
+      padding: 22px 18px 30px 22px;
+    }
+    .process-group-label {
+      margin: 0 0 12px 26px;
+      color: var(--muted);
+      font-size: 10.5px;
+      font-weight: 650;
+      letter-spacing: .65px;
+      text-transform: uppercase;
+    }
+    .agent-process-panel { display: none; }
+    .agent-process-panel.active { display: block; }
+
+    /* Assistant workspace */
+    .assistant-only { display: none !important; }
+    .app.assistant-mode .project-only { display: none !important; }
+    .app.assistant-mode .assistant-sidebar,
+    .app.assistant-mode .assistant-workspace,
+    .app.assistant-mode .assistant-detail { display: flex !important; }
+    .app.project-sidebar-collapsed .assistant-sidebar {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .app.detail-panel-collapsed .assistant-detail {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .app.project-sidebar-collapsed .assistant-workspace-header { padding-left: 58px; }
+
+    .assistant-sidebar {
+      min-height: 0;
+      height: 100vh;
+      min-width: 0;
+      flex-direction: column;
+      overflow: hidden;
+      border-right: 1px solid var(--line);
+      background: var(--surface);
+      transition: opacity 140ms ease, visibility 140ms ease;
+    }
+    .assistant-sidebar-top {
+      flex: none;
+      padding: 14px 16px 10px;
+    }
+    .assistant-sidebar-actions {
+      margin-top: 9px;
+      display: flex;
+      gap: 7px;
+    }
+    .assistant-search {
+      height: 36px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface-soft);
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .assistant-search .icon { width: 15px; height: 15px; }
+    .assistant-search input {
+      min-width: 0;
+      flex: 1;
+      border: 0;
+      outline: none;
+      background: transparent;
+      color: var(--ink);
+      font: inherit;
+    }
+    .add-assistant {
+      min-width: 0;
+      flex: 1;
+      height: 36px;
+      border: 1px solid #2d2d2a;
+      border-radius: 8px;
+      background: #2d2d2a;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 560;
+    }
+    .assistant-list {
+      min-height: 0;
+      overflow: auto;
+      padding: 4px 9px 18px;
+    }
+    .assistant-list-label {
+      padding: 12px 10px 7px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 650;
+      letter-spacing: .6px;
+      text-transform: uppercase;
+    }
+    .assistant-list-item {
+      width: 100%;
+      min-height: 62px;
+      padding: 7px 9px;
+      border: 1px solid transparent;
+      border-radius: 9px;
+      background: transparent;
+      display: grid;
+      grid-template-columns: 38px minmax(0, 1fr) 8px;
+      gap: 9px;
+      align-items: center;
+      text-align: left;
+    }
+    .assistant-list-item:hover { background: var(--surface-soft); }
+    .assistant-list-item.active {
+      border-color: var(--line);
+      background: var(--surface-soft);
+    }
+    .assistant-list-avatar {
+      width: 38px;
+      height: 38px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+    .assistant-list-avatar svg { width: 100%; height: 100%; }
+    .assistant-list-copy { min-width: 0; }
+    .assistant-list-name {
+      overflow: hidden;
+      color: var(--ink);
+      font-size: 12.5px;
+      font-weight: 600;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .assistant-list-desc {
+      margin-top: 4px;
+      overflow: hidden;
+      color: var(--muted);
+      font-size: 10.5px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .assistant-online {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .assistant-workspace {
+      min-height: 0;
+      height: 100vh;
+      min-width: 0;
+      flex-direction: column;
+      border-right: 1px solid var(--line);
+      background: var(--canvas);
+    }
+    .assistant-workspace-header {
+      position: relative;
+      flex: none;
+      height: 70px;
+      padding: 0 22px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: padding-left 180ms ease;
+    }
+    .assistant-header-avatar {
+      width: 34px;
+      height: 34px;
+      overflow: hidden;
+      border: 1px solid var(--line-strong);
+      border-radius: 9px;
+    }
+    .assistant-header-avatar svg { width: 100%; height: 100%; }
+    .assistant-header-copy { min-width: 0; flex: 1; }
+    .assistant-header-name { font-size: 14px; font-weight: 650; }
+    .assistant-header-meta {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 10.5px;
+    }
+    .assistant-header-meta span { color: var(--green); }
+    .assistant-conversation {
+      min-height: 0;
+      flex: 1;
+      overflow: auto;
+      padding: 28px 0 22px;
+    }
+    .assistant-conversation-inner {
+      width: min(780px, calc(100% - 64px));
+      margin: 0 auto;
+    }
+    .assistant-intro {
+      margin-bottom: 25px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .assistant-intro-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 10.5px;
+    }
+    .assistant-intro h2 {
+      margin: 9px 0 5px;
+      font-size: 18px;
+      font-weight: 630;
+      letter-spacing: -.2px;
+    }
+    .assistant-intro p {
+      margin: 0;
+      color: var(--body);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .assistant-document {
+      color: #383834;
+      font-size: 13px;
+      line-height: 1.75;
+    }
+    .assistant-document h3 {
+      margin: 20px 0 8px;
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 650;
+    }
+    .assistant-document p { margin: 0 0 10px; }
+    .assistant-document ol { margin: 7px 0 13px 20px; padding: 0; }
+    .assistant-document ol ol { list-style-type: upper-alpha; }
+    .assistant-document ol ol ol { list-style-type: lower-alpha; }
+    .assistant-response-meta {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+    .tool-chip {
+      height: 24px;
+      padding: 0 7px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--body);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 9.5px;
+    }
+    .assistant-composer-wrap {
+      flex: none;
+      padding: 0 24px 22px;
+      background: linear-gradient(180deg, rgba(247,247,245,0), var(--canvas) 18%);
+    }
+
+    .assistant-detail {
+      min-height: 0;
+      height: 100vh;
+      min-width: 0;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--surface);
+      transition: opacity 140ms ease, visibility 140ms ease;
+    }
+    .assistant-detail-tabs {
+      flex: none;
+      height: 70px;
+      padding: 0 15px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .assistant-detail-tab {
+      height: 100%;
+      padding: 0 15px;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 550;
+    }
+    .assistant-detail-tab.active {
+      border-bottom-color: var(--ink);
+      color: var(--ink);
+    }
+    .assistant-detail-body {
+      min-height: 0;
+      flex: 1;
+      overflow: auto;
+      padding: 20px 17px 28px;
+    }
+    .assistant-detail-view { display: none; }
+    .assistant-detail-view.active { display: block; }
+    .file-group + .file-group { margin-top: 25px; }
+    .file-group-title {
+      margin-bottom: 9px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 650;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+    .file-card {
+      min-height: 58px;
+      margin-bottom: 7px;
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #fbfbfa;
+      display: grid;
+      grid-template-columns: 30px minmax(0, 1fr);
+      gap: 9px;
+      align-items: center;
+    }
+    .file-card:hover { border-color: var(--line-strong); background: var(--surface-soft); }
+    .file-type {
+      width: 28px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 6px;
+      background: #edf3fb;
+      color: #41668f;
+      font-size: 9px;
+      font-weight: 750;
+    }
+    .file-type.pdf { background: #f9e8e7; color: #b5524f; }
+    .file-type.json { background: #f8efdc; color: #9c712a; }
+    .file-type.docx { background: #e9eef9; color: #4d69a0; }
+    .file-type.xlsx { background: #e3f2eb; color: #33765b; }
+    .file-name {
+      overflow: hidden;
+      font-size: 11.5px;
+      font-weight: 580;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .file-meta {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 9.5px;
+    }
+    .terminal-pane {
+      min-height: 420px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #282824;
+      color: #e7e7df;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10.5px;
+      line-height: 1.7;
+    }
+    .terminal-pane .prompt { color: #9bc4a6; }
+    .cloud-desktop {
+      min-height: 420px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: linear-gradient(145deg, #e9eef5, #f7f7f5);
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 11px;
+      text-align: center;
+    }
+    .process-event {
+      position: relative;
+      display: grid;
+      grid-template-columns: 15px minmax(0, 1fr);
+      gap: 11px;
+      padding-bottom: 16px;
+    }
+    .process-event:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      left: 7px;
+      top: 16px;
+      bottom: -1px;
+      width: 1px;
+      background: var(--line);
+    }
+    .event-dot {
+      position: relative;
+      z-index: 1;
+      width: 15px;
+      height: 15px;
+      margin-top: 5px;
+      border: 3px solid var(--surface);
+      border-radius: 50%;
+      background: #b7b7b0;
+      box-shadow: 0 0 0 1px var(--line-strong);
+    }
+    .event-dot.tool { background: #8da7da; }
+    .event-dot.model { background: #b49acb; }
+    .event-dot.done { background: var(--green); }
+    .event-content { min-width: 0; }
+    .event-time {
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+      font-size: 10px;
+    }
+    .event-card {
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #fbfbfa;
+      padding: 10px 10px 9px;
+    }
+    .event-card-top {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+    }
+    .event-type {
+      flex: none;
+      height: 21px;
+      padding: 0 6px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      background: var(--surface-soft);
+      color: var(--body);
+      font-size: 9.5px;
+      font-weight: 650;
+    }
+    .event-type.tool { background: #e8eef9; color: #506b9e; }
+    .event-type.model { background: var(--purple-soft); color: #755c91; }
+    .event-type.done { background: var(--green-soft); color: var(--green); }
+    .event-title {
+      min-width: 0;
+      flex: 1;
+      color: #3f3f3a;
+      font-size: 11.5px;
+      font-weight: 560;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .event-expand {
+      flex: none;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-size: 10px;
+    }
+    .event-detail {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.5;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    @media (max-width: 1550px) {
+      .app {
+        min-width: 1180px;
+        grid-template-columns: 88px 300px minmax(430px, 1fr) 380px;
+      }
+      .app.project-sidebar-collapsed {
+        grid-template-columns: 88px 0 minmax(430px, 1fr) 380px;
+      }
+      .app.detail-panel-collapsed {
+        grid-template-columns: 88px 300px minmax(430px, 1fr) 0;
+      }
+      .app.project-sidebar-collapsed.detail-panel-collapsed {
+        grid-template-columns: 88px 0 minmax(430px, 1fr) 0;
+      }
+      .detail-tab { padding: 0 10px; }
+      .conversation-inner { width: calc(100% - 54px); }
+      .event-detail { display: none; }
+      .detail-toolbar { padding-left: 16px; padding-right: 14px; }
+      .process-list { padding-left: 18px; padding-right: 14px; }
+      .thread-context { font-size: 10.5px; }
+      .thread-heading { width: 260px; max-width: 260px; }
+    }
+
+    @media (max-height: 820px) {
+      .conversation { padding-top: 20px; }
+      .date-divider { margin-bottom: 18px; }
+      .assistant-turn { margin-bottom: 16px; }
+      .user-turn { margin-bottom: 18px; }
+      .composer-wrap { padding-bottom: 14px; }
+      .composer { height: 112px; }
+      .composer textarea { min-height: 58px; padding-top: 13px; }
+    }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute">
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M20 15a3 3 0 0 1-3 3H8l-4 3v-6a3 3 0 0 1-1-2V7a3 3 0 0 1 3-3h11a3 3 0 0 1 3 3z"/></symbol>
+    <symbol id="i-wand" viewBox="0 0 24 24"><path d="m15 4 5 5M4 20 16.5 7.5M12 4l1-2 1 2 2 1-2 1-1 2-1-2-2-1zM5 11l.7-1.4L7 9l-1.3-.6L5 7l-.7 1.4L3 9l1.3.6z"/></symbol>
+    <symbol id="i-project" viewBox="0 0 24 24"><path d="M4 4h10v7H4zM10 13h10v7H10zM7 11v5h3"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><circle cx="8" cy="16" r="3"/><circle cx="16" cy="16" r="3"/></symbol>
+    <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.2 8.5 4.8 4.8 0 0 0 7 18z"/><path d="M12 10v5m0 0-2-2m2 2 2-2"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4m0 1h11l-2 4 2 4H5"/></symbol>
+    <symbol id="i-team" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20a6 6 0 0 1 12 0m0-5a5 5 0 0 1 6 5"/></symbol>
+    <symbol id="i-cube" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
+    <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-panel" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM9 4v16"/></symbol>
+    <symbol id="i-comment-plus" viewBox="0 0 24 24"><path d="M20 15a3 3 0 0 1-3 3H8l-4 3V7a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3zM12 8v6m-3-3h6"/></symbol>
+    <symbol id="i-at" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M16 12v1a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/></symbol>
+    <symbol id="i-paperclip" viewBox="0 0 24 24"><path d="m21 11-8.5 8.5a6 6 0 0 1-8.5-8.5L13 2a4 4 0 0 1 5.7 5.7l-9 9a2 2 0 1 1-2.8-2.8L15 5.8"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="m4 4 16 8-16 8 3-8zM7 12h13"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m8 10 4 4 4-4"/></symbol>
+    <symbol id="i-sidebar-left" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM9 4v16M14 9l-3 3 3 3"/></symbol>
+    <symbol id="i-sidebar-right" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM9 4v16M12 9l3 3-3 3"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20a6 6 0 0 1 12 0m0-5a5 5 0 0 1 6 5"/></symbol>
+    <symbol id="i-agent" viewBox="0 0 24 24"><rect x="5" y="7" width="14" height="12" rx="3"/><path d="M12 3v4M9 12h.01M15 12h.01M9 16h6"/></symbol>
+    <symbol id="i-markdown-file" viewBox="0 0 24 24">
+      <path d="M7 3.5h7l4 4V20.5H7a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2z"/>
+      <path d="M14 3.5v4h4"/>
+      <path d="M8 16v-4l2 2 2-2v4M14.5 12v4m0 0-1.5-1.5m1.5 1.5 1.5-1.5"/>
+    </symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="m8 4 8 0-1 5 3 3v2H6v-2l3-3zM12 14v7"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="avatar-general" viewBox="0 0 32 32">
+      <rect width="32" height="32" rx="8" fill="#dcebf5"/><path d="M7 32c1-7 5-10 9-10s8 3 9 10" fill="#456c86"/>
+      <circle cx="16" cy="14" r="7" fill="#f2c9a6"/><path d="M9 14c0-7 3-10 8-10 4 0 7 3 7 7-3-1-7-3-10-5-1 3-3 5-5 6z" fill="#31495b"/>
+      <circle cx="13.5" cy="14" r=".7" fill="#373733"/><circle cx="18.5" cy="14" r=".7" fill="#373733"/><path d="M14 17c1.3 1 2.7 1 4 0" stroke="#a66957" stroke-width="1" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="avatar-research" viewBox="0 0 32 32">
+      <rect width="32" height="32" rx="8" fill="#e8e2f4"/><path d="M6 32c1-7 5-10 10-10s9 3 10 10" fill="#685b87"/>
+      <circle cx="16" cy="14" r="7" fill="#eec3a2"/><path d="M9 13c0-6 3-9 8-9 5 0 7 4 7 8-4-2-8-3-13-2z" fill="#4b3e55"/>
+      <path d="M11 14h4m2 0h4m-6 0h2" stroke="#534b4a" stroke-width="1" fill="none"/><circle cx="13" cy="14" r="2" stroke="#534b4a" fill="none"/><circle cx="19" cy="14" r="2" stroke="#534b4a" fill="none"/>
+    </symbol>
+    <symbol id="avatar-writer" viewBox="0 0 32 32">
+      <rect width="32" height="32" rx="8" fill="#dcefe7"/><path d="M6 32c1-7 5-10 10-10s9 3 10 10" fill="#3f7866"/>
+      <circle cx="16" cy="14" r="7" fill="#efc5a4"/><path d="M9 14c-1-6 3-10 8-10 4 0 8 3 7 9-2-3-5-5-9-6-1 3-3 5-6 7z" fill="#6a493c"/>
+      <circle cx="13.5" cy="14" r=".7" fill="#373733"/><circle cx="18.5" cy="14" r=".7" fill="#373733"/><path d="M14 17.5h4" stroke="#a66957" stroke-width="1" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="avatar-data" viewBox="0 0 32 32">
+      <rect width="32" height="32" rx="8" fill="#e1ebf7"/><path d="M6 32c1-7 5-10 10-10s9 3 10 10" fill="#536f91"/>
+      <circle cx="16" cy="14" r="7" fill="#dcae8d"/><path d="M9 12c0-5 3-8 7-8 5 0 8 3 8 8-5-1-10-1-15 0z" fill="#242f3b"/>
+      <circle cx="13.5" cy="14" r=".7" fill="#373733"/><circle cx="18.5" cy="14" r=".7" fill="#373733"/>
+    </symbol>
+    <symbol id="avatar-risk" viewBox="0 0 32 32">
+      <rect width="32" height="32" rx="8" fill="#f3e8dc"/><path d="M6 32c1-7 5-10 10-10s9 3 10 10" fill="#8c6848"/>
+      <circle cx="16" cy="14" r="7" fill="#edc2a2"/><path d="M9 13c0-6 3-9 8-9 4 0 7 3 7 8-4-1-8-2-12-1z" fill="#5a4035"/>
+      <path d="M12 14h3m2 0h3m-5 0h2" stroke="#534b4a" stroke-width="1" fill="none"/>
+    </symbol>
+    <symbol id="avatar-review" viewBox="0 0 32 32">
+      <rect width="32" height="32" rx="8" fill="#e8e5f2"/><path d="M6 32c1-7 5-10 10-10s9 3 10 10" fill="#6c6684"/>
+      <circle cx="16" cy="14" r="7" fill="#e7b996"/><path d="M9 14c0-6 2-10 7-10 5 0 8 4 8 9-3-3-7-4-12-4z" fill="#38313e"/>
+      <circle cx="13.5" cy="14" r=".7" fill="#373733"/><circle cx="18.5" cy="14" r=".7" fill="#373733"/>
+    </symbol>
+    <symbol id="avatar-citation" viewBox="0 0 32 32">
+      <rect width="32" height="32" rx="8" fill="#dfecef"/><path d="M6 32c1-7 5-10 10-10s9 3 10 10" fill="#52747a"/>
+      <circle cx="16" cy="14" r="7" fill="#f0c5a5"/><path d="M9 13c0-6 3-9 8-9 5 0 7 4 7 8-2-1-4-3-5-5-3 3-6 4-10 5z" fill="#344b4d"/>
+      <circle cx="13.5" cy="14" r=".7" fill="#373733"/><circle cx="18.5" cy="14" r=".7" fill="#373733"/>
+    </symbol>
+  </svg>
+
+  <main class="app">
+    <nav class="global-nav" aria-label="全局导航">
+      <div class="traffic-lights"><span></span><span></span><span></span></div>
+      <div class="profile">🐱</div>
+      <div class="global-nav-list">
+        <button class="global-nav-item"><svg class="icon"><use href="#i-chat"/></svg><span>聊天</span></button>
+        <button class="global-nav-item mode-nav" data-mode="assistant"><svg class="icon"><use href="#i-wand"/></svg><span>助理</span></button>
+        <button class="global-nav-item mode-nav selected" data-mode="project"><svg class="icon"><use href="#i-project"/></svg><span>项目</span></button>
+        <button class="global-nav-item"><svg class="icon"><use href="#i-grid"/></svg><span>广场</span></button>
+        <button class="global-nav-item"><svg class="icon"><use href="#i-cloud"/></svg><span>连接云</span></button>
+        <button class="global-nav-item"><svg class="icon"><use href="#i-flag"/></svg><span>OKR</span></button>
+        <button class="global-nav-item"><svg class="icon"><use href="#i-team"/></svg><span>团队</span></button>
+        <button class="global-nav-item"><svg class="icon"><use href="#i-cube"/></svg><span>Hi维表</span></button>
+        <button class="global-nav-item"><svg class="icon"><use href="#i-more"/></svg><span>更多</span></button>
+      </div>
+      <div class="global-nav-bottom">
+        <button><svg class="icon"><use href="#i-bookmark"/></svg></button>
+        <button><svg class="icon"><use href="#i-menu"/></svg></button>
+      </div>
+    </nav>
+
+    <aside class="assistant-sidebar assistant-only">
+      <div class="assistant-sidebar-top">
+        <label class="assistant-search"><svg class="icon"><use href="#i-search"/></svg><input placeholder="搜索助理" /></label>
+        <div class="assistant-sidebar-actions">
+          <button class="add-assistant"><svg class="icon" style="display:inline-block;width:14px;height:14px;vertical-align:-2px"><use href="#i-plus"/></svg> 添加助理</button>
+          <button class="collapse-sidebar" data-tooltip="收起助理栏" aria-label="收起助理栏"><svg class="icon"><use href="#i-sidebar-left"/></svg></button>
+        </div>
+      </div>
+      <div class="assistant-list">
+        <div class="assistant-list-label">我的助理</div>
+        <button class="assistant-list-item active" data-assistant="超级助理" data-meta="在线 · 可执行跨应用任务" data-avatar="general">
+          <span class="assistant-list-avatar"><svg viewBox="0 0 32 32"><use href="#avatar-general"/></svg></span>
+          <span class="assistant-list-copy"><span class="assistant-list-name">超级助理</span><span class="assistant-list-desc">处理文件、数据与跨应用任务</span></span><span class="assistant-online"></span>
+        </button>
+        <button class="assistant-list-item" data-assistant="报销审核专家" data-meta="在线 · 财务审核" data-avatar="research">
+          <span class="assistant-list-avatar"><svg viewBox="0 0 32 32"><use href="#avatar-research"/></svg></span>
+          <span class="assistant-list-copy"><span class="assistant-list-name">报销审核专家</span><span class="assistant-list-desc">自动核验报销单据与发票信息</span></span><span class="assistant-online"></span>
+        </button>
+        <button class="assistant-list-item" data-assistant="面试评估专家" data-meta="在线 · 招聘评估" data-avatar="writer">
+          <span class="assistant-list-avatar"><svg viewBox="0 0 32 32"><use href="#avatar-writer"/></svg></span>
+          <span class="assistant-list-copy"><span class="assistant-list-name">面试评估专家</span><span class="assistant-list-desc">整合多轮面试评价与打分记录</span></span><span class="assistant-online"></span>
+        </button>
+        <button class="assistant-list-item" data-assistant="需求拆解专家" data-meta="在线 · 产品规划" data-avatar="data">
+          <span class="assistant-list-avatar"><svg viewBox="0 0 32 32"><use href="#avatar-data"/></svg></span>
+          <span class="assistant-list-copy"><span class="assistant-list-name">需求拆解专家</span><span class="assistant-list-desc">拆解需求并生成可执行任务</span></span><span class="assistant-online"></span>
+        </button>
+      </div>
+    </aside>
+
+    <section class="assistant-workspace assistant-only">
+      <header class="assistant-workspace-header">
+        <button class="show-project-sidebar" data-tooltip="展开助理栏" aria-label="展开助理栏"><svg class="icon"><use href="#i-sidebar-right"/></svg></button>
+        <div class="assistant-header-avatar"><svg viewBox="0 0 32 32"><use id="assistant-header-avatar-use" href="#avatar-general"/></svg></div>
+        <div class="assistant-header-copy"><div class="assistant-header-name" id="assistant-header-name">超级助理</div><div class="assistant-header-meta" id="assistant-header-meta"><span>●</span> 在线 · 可执行跨应用任务</div></div>
+        <button class="icon-btn detail-toggle" data-tooltip="收起详情栏" aria-label="收起详情栏"><svg class="icon detail-toggle-collapse"><use href="#i-panel"/></svg><svg class="icon detail-toggle-expand"><use href="#i-sidebar-left"/></svg></button>
+      </header>
+      <div class="assistant-conversation">
+        <div class="assistant-conversation-inner">
+          <div class="assistant-intro">
+            <div class="assistant-intro-label"><svg class="icon" style="width:14px;height:14px"><use href="#i-wand"/></svg>正在处理你的请求</div>
+            <h2>山海银行数据安全运营项目</h2>
+            <p>已读取你上传的文件，并结合项目环境整理可执行的上线确认方案。</p>
+          </div>
+          <div class="assistant-document">
+            <p>可以，两个都基本按照编辑器的方式设置中文：分成“界面中文”和“AI 回复中文”两件事。</p>
+            <h3>四级：上线前确认</h3>
+            <p>本次发布包含登录页优化、接口错误提示和 token refresh 逻辑调整。</p>
+            <ol>
+              <li>一级有序列表 – decimal
+                <ol><li>二级有序列表 – upper-alpha
+                  <ol><li>三级有序列表 – lower-alpha</li><li>三级配置核验与回滚检查</li></ol>
+                </li></ol>
+              </li>
+            </ol>
+            <p>检查完成后，我会将最终确认结果同步到项目文件并生成一份可下载的 Markdown 交付物。</p>
+          </div>
+          <div class="assistant-response-meta">
+            <span>15:14</span><span>Tokens: 22,344</span><button class="tool-chip">skill_manager</button>
+          </div>
+        </div>
+      </div>
+      <div class="assistant-composer-wrap">
+        <div class="composer">
+          <textarea placeholder="向超级助理发送消息或安排任务…">这个 Figma 节点是一个 1440×900 的界面稿，节点名叫「任务–更多命令」。</textarea>
+          <div class="composer-toolbar">
+            <button class="composer-tool"><svg class="icon"><use href="#i-plus"/></svg></button>
+            <button class="mode-chip">Auto <svg class="icon"><use href="#i-chevron"/></svg></button>
+            <div class="composer-spacer"></div>
+            <button class="composer-tool"><svg class="icon"><use href="#i-mic"/></svg></button>
+            <button class="send-button"><svg class="icon"><use href="#i-send"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="assistant-detail assistant-only">
+      <div class="assistant-detail-tabs">
+        <button class="assistant-detail-tab active" data-view="files">文件</button>
+        <button class="assistant-detail-tab" data-view="terminal">终端</button>
+        <button class="assistant-detail-tab" data-view="desktop">云桌面</button>
+      </div>
+      <div class="assistant-detail-body">
+        <div class="assistant-detail-view active" data-view="files">
+          <div class="file-group"><div class="file-group-title">用户上传附件</div>
+            <div class="file-card"><span class="file-type pdf">PDF</span><span><div class="file-name">IP威胁情报报告.pdf</div><div class="file-meta">6.8M · 2026-04-15 · 来自：刘主管</div></span></div>
+            <div class="file-card"><span class="file-type json">JSON</span><span><div class="file-name">资产快照.json</div><div class="file-meta">2.4M · 2026-04-15 · 来自：刘主管</div></span></div>
+            <div class="file-card"><span class="file-type docx">DOC</span><span><div class="file-name">加固清单与派单回执.docx</div><div class="file-meta">860K · 2026-04-15 · 来自：刘主管</div></span></div>
+          </div>
+          <div class="file-group"><div class="file-group-title">专家生成产物</div>
+            <div class="file-card"><span class="file-type json">JSON</span><span><div class="file-name">资产风险快照.json</div><div class="file-meta">1.8M · 来自：威胁情报专家</div></span></div>
+            <div class="file-card"><span class="file-type pdf">MD</span><span><div class="file-name">IP威胁情报报告.md</div><div class="file-meta">420K · 来自：威胁情报专家</div></span></div>
+            <div class="file-card"><span class="file-type xlsx">XLS</span><span><div class="file-name">资产加固跟踪表.xlsx</div><div class="file-meta">780K · 来自：数据分析专家</div></span></div>
+          </div>
+        </div>
+        <div class="assistant-detail-view" data-view="terminal"><div class="terminal-pane"><span class="prompt">assistant@cloud</span>:~$ ls workspace<br/>IP威胁情报报告.pdf&nbsp;&nbsp;资产快照.json<br/><span class="prompt">assistant@cloud</span>:~$ python analyze_assets.py<br/>✓ 读取 1,284 条资产记录<br/>✓ 发现 37 条高风险资产<br/>✓ 已生成资产风险快照.json<br/><span class="prompt">assistant@cloud</span>:~$ _</div></div>
+        <div class="assistant-detail-view" data-view="desktop"><div class="cloud-desktop"><div><svg class="icon" style="width:32px;height:32px;margin:0 auto 12px"><use href="#i-cloud"/></svg><strong style="color:var(--ink)">云桌面已连接</strong><br/><br/>助理可以在隔离环境中打开网页、处理文件并执行桌面任务。</div></div></div>
+      </div>
+    </aside>
+
+    <aside class="project-sidebar project-only">
+      <div class="sidebar-top">
+        <label class="project-search"><svg class="icon"><use href="#i-search"/></svg><input class="project-search-input" placeholder="搜索项目或任务" aria-label="搜索项目或任务" /></label>
+        <div class="project-sidebar-actions">
+          <button class="new-project"><svg class="icon"><use href="#i-plus"/></svg>新建项目</button>
+          <button class="collapse-sidebar" data-tooltip="收起项目栏" aria-label="收起项目栏"><svg class="icon"><use href="#i-sidebar-left"/></svg></button>
+        </div>
+      </div>
+      <div class="project-list">
+        <div class="sidebar-label">置顶项目</div>
+        <div class="project-section pinned-projects">
+          <div class="project-unit">
+            <div class="project-row active-parent pinned">
+              <div class="project-icon">📊</div>
+              <div class="project-name">竞对分析V2</div>
+              <div class="project-actions">
+                <button class="row-action pin-project active" data-tooltip="取消置顶" aria-label="取消置顶项目"><svg class="icon"><use href="#i-pin"/></svg></button>
+                <button class="row-action" data-tooltip="新建任务" aria-label="新建任务"><svg class="icon"><use href="#i-plus"/></svg></button>
+              </div>
+            </div>
+            <div class="thread-tree" aria-label="竞对分析V2 的任务">
+              <div class="thread-row active"><span class="task-state">✓</span>调研2025年企业AI Agent产品</div>
+              <div class="thread-row"><span class="task-state">•</span>Trae产品逻辑分析与讨论</div>
+            </div>
+          </div>
+        </div>
+        <div class="sidebar-label">最近项目</div>
+        <div class="project-section recent-projects">
+          <div class="project-unit"><div class="project-row"><div class="project-icon orange">A</div><div class="project-name">AgentTeams项目组</div><div class="project-actions"><button class="row-action pin-project" data-tooltip="置顶项目" aria-label="置顶项目"><svg class="icon"><use href="#i-pin"/></svg></button><button class="row-action" data-tooltip="新建任务" aria-label="新建任务"><svg class="icon"><use href="#i-plus"/></svg></button></div></div></div>
+          <div class="project-unit"><div class="project-row"><div class="project-icon purple">A</div><div class="project-name">Agentteams设计小组</div><div class="project-actions"><button class="row-action pin-project" data-tooltip="置顶项目" aria-label="置顶项目"><svg class="icon"><use href="#i-pin"/></svg></button><button class="row-action" data-tooltip="新建任务" aria-label="新建任务"><svg class="icon"><use href="#i-plus"/></svg></button></div></div></div>
+          <div class="project-unit"><div class="project-row"><div class="project-icon mint">A</div><div class="project-name">AgentTeams发布会</div><div class="project-actions"><button class="row-action pin-project" data-tooltip="置顶项目" aria-label="置顶项目"><svg class="icon"><use href="#i-pin"/></svg></button><button class="row-action" data-tooltip="新建任务" aria-label="新建任务"><svg class="icon"><use href="#i-plus"/></svg></button></div></div></div>
+          <div class="project-unit"><div class="project-row"><div class="project-icon blue">A</div><div class="project-name">AI Native 设计团队专业管理</div><div class="project-actions"><button class="row-action pin-project" data-tooltip="置顶项目" aria-label="置顶项目"><svg class="icon"><use href="#i-pin"/></svg></button><button class="row-action" data-tooltip="新建任务" aria-label="新建任务"><svg class="icon"><use href="#i-plus"/></svg></button></div></div></div>
+          <div class="project-unit"><div class="project-row"><div class="project-icon lilac">▤</div><div class="project-name">巴啦啦小组</div><div class="project-actions"><button class="row-action pin-project" data-tooltip="置顶项目" aria-label="置顶项目"><svg class="icon"><use href="#i-pin"/></svg></button><button class="row-action" data-tooltip="新建任务" aria-label="新建任务"><svg class="icon"><use href="#i-plus"/></svg></button></div></div></div>
+        </div>
+        <div class="project-empty-state" hidden>没有找到匹配的项目或任务</div>
+      </div>
+    </aside>
+
+    <section class="workspace project-only">
+      <header class="workspace-header">
+        <button class="show-project-sidebar" data-tooltip="展开项目栏" aria-label="展开项目栏"><svg class="icon"><use href="#i-sidebar-right"/></svg></button>
+        <div class="thread-heading">
+          <div class="thread-title">调研2025年企业 AI Agent 产品</div>
+          <div class="thread-context">
+            <span class="context-participants"><svg class="icon"><use href="#i-users"/></svg>3 位任务成员</span>
+            <span class="context-participants agent"><svg class="icon"><use href="#i-agent"/></svg>2 位 Agent 专家</span>
+          </div>
+        </div>
+        <div class="segmented" role="tablist">
+          <button class="active"><span class="tab-label">指令</span><span class="tab-hint">人与 Agent</span></button>
+          <button><span class="tab-label">讨论</span><span class="tab-hint">人与人</span></button>
+        </div>
+        <div class="header-actions">
+          <button class="icon-btn detail-toggle" data-tooltip="收起详情栏" aria-label="收起详情栏">
+            <svg class="icon detail-toggle-collapse"><use href="#i-panel"/></svg>
+            <svg class="icon detail-toggle-expand"><use href="#i-sidebar-left"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="conversation">
+        <div class="conversation-inner">
+          <div class="date-divider">2026 年 5 月 28 日</div>
+
+          <div class="assistant-turn">
+            <div class="agent-avatar"><svg viewBox="0 0 32 32"><use href="#avatar-general"/></svg></div>
+            <div class="turn-content">
+              <div class="turn-meta"><span class="turn-name">全能专家</span><span>11:07</span></div>
+              <div class="assistant-text">
+                <p>我会继续补充更多可验证的信息来源，并优先整理产品定位、核心能力与典型使用场景。</p>
+              </div>
+              <div class="reasoning"><span class="pulse"></span>正在检索并核对来源</div>
+            </div>
+          </div>
+
+          <div class="assistant-turn">
+            <div class="agent-avatar"><svg viewBox="0 0 32 32"><use href="#avatar-general"/></svg></div>
+            <div class="turn-content">
+              <div class="turn-meta"><span class="turn-name">全能专家</span><span>11:12</span></div>
+              <div class="assistant-text">
+                <p>已收集到足够的可用信息，开始整理输出。报告将包含趋势、代表产品、应用场景、风险及来源链接。</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="user-turn">
+            <div class="user-meta"><span>方静</span><span>18:29</span></div>
+            <div class="user-message">
+              <span class="mention">@全能专家</span> 以上内容输出为 md 文件
+              <div class="member-chip"><span>🧑‍💻</span><span>全能专家</span><span>已指派</span></div>
+            </div>
+          </div>
+
+          <div class="assistant-turn">
+            <div class="agent-avatar"><svg viewBox="0 0 32 32"><use href="#avatar-general"/></svg></div>
+            <div class="turn-content">
+              <div class="turn-meta"><span class="turn-name">全能专家</span><span>18:30</span></div>
+              <div class="assistant-text">
+                <p><span class="mention">@方静</span> 已完成整理，文件已存档到项目中。</p>
+              </div>
+              <div class="artifact-card">
+                <div class="artifact-head">
+                  <div class="artifact-icon" aria-label="Markdown 文件"><svg class="icon md-file-icon"><use href="#i-markdown-file"/></svg></div>
+                  <div class="artifact-title">2026-05-28_企业AI-Agent调研报告.md</div>
+                  <div class="artifact-badge">MD</div>
+                </div>
+                <div class="artifact-body">
+                  完整调研报告，包含趋势、代表产品、应用场景、风险及来源链接。
+                  <div class="artifact-actions">
+                    <button class="small-button primary">打开文件</button>
+                    <button class="small-button">下载</button>
+                    <button class="small-button">复制路径</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="composer-wrap">
+        <div class="composer">
+          <textarea placeholder="向 Agent 下达指令，或 @助理 分配工作…"></textarea>
+          <div class="composer-toolbar">
+            <button class="composer-tool"><svg class="icon"><use href="#i-plus"/></svg></button>
+            <button class="composer-tool"><svg class="icon"><use href="#i-at"/></svg></button>
+            <button class="composer-tool"><svg class="icon"><use href="#i-paperclip"/></svg></button>
+            <div class="composer-spacer"></div>
+            <button class="mode-chip">发送给 Agent <svg class="icon"><use href="#i-chevron"/></svg></button>
+            <button class="composer-tool"><svg class="icon"><use href="#i-mic"/></svg></button>
+            <button class="send-button"><svg class="icon"><use href="#i-send"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="detail-panel project-only">
+      <div class="detail-tabs">
+        <button class="detail-tab">Playbook</button>
+        <button class="detail-tab">交付物</button>
+        <button class="detail-tab active">过程</button>
+        <button class="detail-tab">任务成员</button>
+      </div>
+      <div class="detail-toolbar">
+        <div class="agent-progress-switcher" aria-label="切换 Agent 专家的执行进度">
+          <button class="agent-progress-option selected" data-agent="general" data-name="全能专家" data-status="已完成 · 6 条执行记录" data-tooltip="全能专家 · 已完成">
+            <span class="agent-progress-avatar"><svg viewBox="0 0 32 32"><use href="#avatar-general"/></svg></span><span class="agent-progress-dot"></span>
+          </button>
+          <button class="agent-progress-option research" data-agent="research" data-name="竞品研究专家" data-status="已完成 · 3 条执行记录" data-tooltip="竞品研究专家 · 已完成">
+            <span class="agent-progress-avatar"><svg viewBox="0 0 32 32"><use href="#avatar-research"/></svg></span><span class="agent-progress-dot"></span>
+          </button>
+          <button class="agent-progress-option writer" data-agent="writer" data-name="报告撰写专家" data-status="已完成 · 1 个交付物" data-tooltip="报告撰写专家 · 已完成">
+            <span class="agent-progress-avatar"><svg viewBox="0 0 32 32"><use href="#avatar-writer"/></svg></span><span class="agent-progress-dot"></span>
+          </button>
+          <button class="agent-progress-option" data-agent="data" data-name="数据分析专家" data-status="等待中" data-tooltip="数据分析专家 · 等待中">
+            <span class="agent-progress-avatar"><svg viewBox="0 0 32 32"><use href="#avatar-data"/></svg></span><span class="agent-progress-dot waiting"></span>
+          </button>
+          <button class="agent-progress-option research" data-agent="risk" data-name="风险评估专家" data-status="执行中" data-tooltip="风险评估专家 · 执行中">
+            <span class="agent-progress-avatar"><svg viewBox="0 0 32 32"><use href="#avatar-risk"/></svg></span><span class="agent-progress-dot running"></span>
+          </button>
+          <button class="agent-progress-option writer" data-agent="review" data-name="质量审核专家" data-status="等待中" data-tooltip="质量审核专家 · 等待中">
+            <span class="agent-progress-avatar"><svg viewBox="0 0 32 32"><use href="#avatar-review"/></svg></span><span class="agent-progress-dot waiting"></span>
+          </button>
+          <button class="agent-progress-option" data-agent="citation" data-name="来源核验专家" data-status="执行中" data-tooltip="来源核验专家 · 执行中">
+            <span class="agent-progress-avatar"><svg viewBox="0 0 32 32"><use href="#avatar-citation"/></svg></span><span class="agent-progress-dot running"></span>
+          </button>
+        </div>
+      </div>
+      <div class="process-list">
+        <div class="agent-process-panel active" data-agent="general">
+        <div class="process-group-label"><span id="process-agent-name">全能专家</span>的执行记录 · 18:29 开始</div>
+
+        <div class="process-event">
+          <span class="event-dot"></span>
+          <div class="event-content">
+            <div class="event-time">18:29:59</div>
+            <div class="event-card">
+              <div class="event-card-top">
+                <span class="event-type">用户消息</span>
+                <span class="event-title">@全能专家 以上内容输出为 md 文件</span>
+                <button class="event-expand">展开</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="process-event">
+          <span class="event-dot model"></span>
+          <div class="event-content">
+            <div class="event-time">18:30:05</div>
+            <div class="event-card">
+              <div class="event-card-top">
+                <span class="event-type model">模型调用</span>
+                <span class="event-title">appmkt/minimax-m2.5</span>
+                <button class="event-expand">展开</button>
+              </div>
+              <div class="event-detail">读取项目上下文与最近 0 条历史消息</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="process-event">
+          <span class="event-dot tool"></span>
+          <div class="event-content">
+            <div class="event-time">18:30:11</div>
+            <div class="event-card">
+              <div class="event-card-top">
+                <span class="event-type tool">工具调用</span>
+                <span class="event-title">message · send</span>
+                <button class="event-expand">展开</button>
+              </div>
+              <div class="event-detail">发送任务执行状态与阶段说明</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="process-event">
+          <span class="event-dot tool"></span>
+          <div class="event-content">
+            <div class="event-time">18:30:12</div>
+            <div class="event-card">
+              <div class="event-card-top">
+                <span class="event-type tool">工具调用</span>
+                <span class="event-title">write · 企业AI-Agent调研报告.md</span>
+                <button class="event-expand">展开</button>
+              </div>
+              <div class="event-detail">将完整调研内容写入项目文件</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="process-event">
+          <span class="event-dot done"></span>
+          <div class="event-content">
+            <div class="event-time">18:30:15</div>
+            <div class="event-card">
+              <div class="event-card-top">
+                <span class="event-type done">任务完成</span>
+                <span class="event-title">耗时 9.39 秒</span>
+                <button class="event-expand">展开</button>
+              </div>
+              <div class="event-detail">已生成 1 个交付物，无待确认事项</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="process-event">
+          <span class="event-dot"></span>
+          <div class="event-content">
+            <div class="event-time">18:30:15</div>
+            <div class="event-card">
+              <div class="event-card-top">
+                <span class="event-type">模型响应</span>
+                <span class="event-title">已向用户返回文件与存档位置</span>
+                <button class="event-expand">展开</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        </div>
+
+        <div class="agent-process-panel" data-agent="research">
+          <div class="process-group-label">竞品研究专家的执行记录 · 11:07 开始</div>
+          <div class="process-event">
+            <span class="event-dot model"></span>
+            <div class="event-content">
+              <div class="event-time">11:07:12</div>
+              <div class="event-card">
+                <div class="event-card-top">
+                  <span class="event-type model">模型调用</span>
+                  <span class="event-title">拆解企业 Agent 产品调研维度</span>
+                  <button class="event-expand">展开</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="process-event">
+            <span class="event-dot tool"></span>
+            <div class="event-content">
+              <div class="event-time">11:07:28</div>
+              <div class="event-card">
+                <div class="event-card-top">
+                  <span class="event-type tool">工具调用</span>
+                  <span class="event-title">search · 企业 AI Agent 产品</span>
+                  <button class="event-expand">展开</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="process-event">
+            <span class="event-dot done"></span>
+            <div class="event-content">
+              <div class="event-time">11:12:04</div>
+              <div class="event-card">
+                <div class="event-card-top">
+                  <span class="event-type done">阶段完成</span>
+                  <span class="event-title">已整理 18 个可信来源</span>
+                  <button class="event-expand">展开</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="agent-process-panel" data-agent="writer">
+          <div class="process-group-label">报告撰写专家的执行记录 · 18:30 开始</div>
+          <div class="process-event">
+            <span class="event-dot tool"></span>
+            <div class="event-content">
+              <div class="event-time">18:30:10</div>
+              <div class="event-card">
+                <div class="event-card-top">
+                  <span class="event-type tool">读取内容</span>
+                  <span class="event-title">汇总调研来源与分析结论</span>
+                  <button class="event-expand">展开</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="process-event">
+            <span class="event-dot tool"></span>
+            <div class="event-content">
+              <div class="event-time">18:30:12</div>
+              <div class="event-card">
+                <div class="event-card-top">
+                  <span class="event-type tool">工具调用</span>
+                  <span class="event-title">write · 企业AI-Agent调研报告.md</span>
+                  <button class="event-expand">展开</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="process-event">
+            <span class="event-dot done"></span>
+            <div class="event-content">
+              <div class="event-time">18:30:15</div>
+              <div class="event-card">
+                <div class="event-card-top">
+                  <span class="event-type done">任务完成</span>
+                  <span class="event-title">已生成 1 个 Markdown 交付物</span>
+                  <button class="event-expand">展开</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="agent-process-panel" data-agent="data">
+          <div class="process-group-label">数据分析专家 · 暂无执行记录</div>
+        </div>
+        <div class="agent-process-panel" data-agent="risk">
+          <div class="process-group-label">风险评估专家的执行记录 · 执行中</div>
+          <div class="process-event">
+            <span class="event-dot tool"></span>
+            <div class="event-content">
+              <div class="event-time">18:31:02</div>
+              <div class="event-card">
+                <div class="event-card-top"><span class="event-type tool">分析中</span><span class="event-title">评估企业 Agent 应用风险</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="agent-process-panel" data-agent="review">
+          <div class="process-group-label">质量审核专家 · 暂无执行记录</div>
+        </div>
+        <div class="agent-process-panel" data-agent="citation">
+          <div class="process-group-label">来源核验专家的执行记录 · 执行中</div>
+          <div class="process-event">
+            <span class="event-dot tool"></span>
+            <div class="event-content">
+              <div class="event-time">18:31:08</div>
+              <div class="event-card">
+                <div class="event-card-top"><span class="event-type tool">核验中</span><span class="event-title">检查报告中的来源链接</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+  <script>
+    const app = document.querySelector(".app");
+    const collapseButtons = document.querySelectorAll(".collapse-sidebar");
+    const showButtons = document.querySelectorAll(".show-project-sidebar");
+    const detailToggles = document.querySelectorAll(".detail-toggle");
+
+    function setProjectSidebarCollapsed(collapsed) {
+      app.classList.toggle("project-sidebar-collapsed", collapsed);
+      collapseButtons.forEach(button => button.setAttribute("aria-expanded", String(!collapsed)));
+      showButtons.forEach(button => button.setAttribute("aria-expanded", String(!collapsed)));
+    }
+
+    collapseButtons.forEach(button => button.addEventListener("click", () => setProjectSidebarCollapsed(true)));
+    showButtons.forEach(button => button.addEventListener("click", () => setProjectSidebarCollapsed(false)));
+
+    function setDetailPanelCollapsed(collapsed) {
+      app.classList.toggle("detail-panel-collapsed", collapsed);
+      const label = collapsed ? "展开详情栏" : "收起详情栏";
+      detailToggles.forEach(button => {
+        button.setAttribute("aria-label", label);
+        button.dataset.tooltip = label;
+        button.setAttribute("aria-expanded", String(!collapsed));
+      });
+    }
+
+    detailToggles.forEach(button => button.addEventListener("click", () => {
+        setDetailPanelCollapsed(!app.classList.contains("detail-panel-collapsed"));
+      }));
+
+    document.querySelectorAll(".mode-nav").forEach(button => {
+      button.addEventListener("click", () => {
+        app.classList.toggle("assistant-mode", button.dataset.mode === "assistant");
+        document.querySelectorAll(".mode-nav").forEach(item => item.classList.toggle("selected", item === button));
+      });
+    });
+
+    const assistantHeaderName = document.querySelector("#assistant-header-name");
+    const assistantHeaderMeta = document.querySelector("#assistant-header-meta");
+    const assistantHeaderAvatar = document.querySelector("#assistant-header-avatar-use");
+    const assistantComposer = document.querySelector(".assistant-workspace .composer textarea");
+    document.querySelectorAll(".assistant-list-item").forEach(item => {
+      item.addEventListener("click", () => {
+        document.querySelectorAll(".assistant-list-item").forEach(row => row.classList.toggle("active", row === item));
+        assistantHeaderName.textContent = item.dataset.assistant;
+        assistantHeaderMeta.innerHTML = `<span>●</span> ${item.dataset.meta}`;
+        assistantHeaderAvatar.setAttribute("href", `#avatar-${item.dataset.avatar}`);
+        assistantComposer.placeholder = `向${item.dataset.assistant}发送消息或安排任务…`;
+      });
+    });
+
+    document.querySelectorAll(".assistant-detail-tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".assistant-detail-tab").forEach(item => item.classList.toggle("active", item === tab));
+        document.querySelectorAll(".assistant-detail-view").forEach(view => view.classList.toggle("active", view.dataset.view === tab.dataset.view));
+      });
+    });
+
+    const pinnedProjects = document.querySelector(".pinned-projects");
+    const recentProjects = document.querySelector(".recent-projects");
+    const projectSearchInput = document.querySelector(".project-search-input");
+    const projectEmptyState = document.querySelector(".project-empty-state");
+
+    function updateProjectSectionLabels() {
+      [pinnedProjects, recentProjects].forEach(section => {
+        const hasVisibleProjects = Array.from(section.children).some(project => !project.hidden);
+        section.previousElementSibling.hidden = !hasVisibleProjects;
+      });
+    }
+
+    function applyProjectSearch() {
+      const query = (projectSearchInput?.value || "").trim().toLowerCase();
+      let visibleCount = 0;
+
+      document.querySelectorAll(".project-unit").forEach(projectUnit => {
+        const projectName = projectUnit.querySelector(".project-name")?.textContent.toLowerCase() || "";
+        const taskRows = Array.from(projectUnit.querySelectorAll(".thread-row"));
+        const projectMatches = query === "" || projectName.includes(query);
+        let taskMatches = false;
+
+        taskRows.forEach(row => {
+          const matches = row.textContent.toLowerCase().includes(query);
+          taskMatches = taskMatches || matches;
+          row.hidden = query !== "" && !projectMatches && !matches;
+        });
+
+        if (query === "" || projectMatches) {
+          taskRows.forEach(row => {
+            row.hidden = false;
+          });
+        }
+
+        const visible = projectMatches || taskMatches;
+        projectUnit.hidden = !visible;
+        if (visible) visibleCount += 1;
+      });
+
+      updateProjectSectionLabels();
+      if (projectEmptyState) projectEmptyState.hidden = visibleCount !== 0;
+    }
+
+    document.querySelectorAll(".pin-project").forEach(button => {
+      button.addEventListener("click", event => {
+        event.stopPropagation();
+        const projectUnit = button.closest(".project-unit");
+        const projectRow = button.closest(".project-row");
+        const pinned = button.classList.toggle("active");
+        projectRow.classList.toggle("pinned", pinned);
+        button.dataset.tooltip = pinned ? "取消置顶" : "置顶项目";
+        button.setAttribute("aria-label", pinned ? "取消置顶项目" : "置顶项目");
+        (pinned ? pinnedProjects : recentProjects).prepend(projectUnit);
+        applyProjectSearch();
+      });
+    });
+    projectSearchInput?.addEventListener("input", applyProjectSearch);
+    applyProjectSearch();
+
+    document.querySelectorAll(".agent-progress-option").forEach(option => {
+      option.addEventListener("click", () => {
+        document.querySelectorAll(".agent-progress-option").forEach(item => item.classList.remove("selected"));
+        option.classList.add("selected");
+        document.querySelectorAll(".agent-process-panel").forEach(panel => {
+          panel.classList.toggle("active", panel.dataset.agent === option.dataset.agent);
+        });
+      });
+    });
+  </script>
+</body>
+</html>
